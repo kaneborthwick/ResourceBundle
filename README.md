@@ -41,13 +41,13 @@ e.g
 
 ## Service Manager
 ```
-    $container->get("towersystems.repository.category");
+    $container->get("tower.repository.category");
 ```
 
 ```
-    $container->get("towersystems.factory.category");
+    $container->get("tower.factory.category");
 ```
 
 ```
-    $container->get("towersystems.handler.category");
+    $container->get("tower.handler.category");
 ```
