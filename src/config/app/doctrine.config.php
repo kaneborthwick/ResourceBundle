@@ -26,7 +26,7 @@ return [
             'resource_bundle_config' => [
                 'class' => \Doctrine\ORM\Mapping\Driver\AnnotationDriver::class,
                 'cache' => 'array',
-                'paths' => __DIR__ . '/../../../../../vendor/gedmo/doctrine-extensions/lib/Gedmo/Loggable/Entity',
+                'paths' => __DIR__ . '/../../../../../gedmo/doctrine-extensions/lib/Gedmo/Loggable/Entity',
             ],
         ],
         'configuration' => [
