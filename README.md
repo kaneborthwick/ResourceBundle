@@ -1,4 +1,4 @@
-#composer require towersystems/resource-bundle
+# composer require towersystems/resource-bundle
 
 
 Register a resource that can be used in your application. 
