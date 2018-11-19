@@ -38,3 +38,16 @@ e.g
     ],
 ];
 ```
+
+## Service Manager
+```
+    $container->get("towersystems.repository.category");
+```
+
+```
+    $container->get("towersystems.factory.category");
+```
+
+```
+    $container->get("towersystems.handler.category");
+```
