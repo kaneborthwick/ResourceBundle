@@ -1,4 +1,4 @@
-<h1>composer require towersystems/resource-bundle</h1>
+#composer require towersystems/resource-bundle
 
 
 Register a resource that can be used in your application. 
@@ -7,7 +7,8 @@ Resource Controller, Factory, Repository, and CRUD api will be generated for you
 
 e.g
 
-<h2>Register a new resource</h2>
+## Register a new resource
+
 ```
 [
     'towersystems_resource' => [
@@ -23,7 +24,8 @@ e.g
 ];
 ```
 
-<h2>Create API Routes</h2>
+## Create API Routes
+
 ```
 [
     'towersystems_resource' => [
