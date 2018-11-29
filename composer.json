@@ -8,16 +8,12 @@
             "email": "kane.borthwick@hotmail.com"
         }
     ],
-     "keywords": [
-        "expressive",
-        "zend-expressive"
-    ],
     "minimum-stability": "dev",
     "prefer-stable": true,
     "require": {
         "php": "^7.1",
-        "towersystems/resource": "^1.0.0",
-        "dasprid/container-interop-doctrine": "^1.0",
+        "towersystems/resource": "dev-master@dev",
+        "dasprid/container-interop-doctrine": "^0.2.3",
         "firebase/php-jwt": "^5.0",
         "gedmo/doctrine-extensions": "^2.4",
         "league/tactician": "^1.0",

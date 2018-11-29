@@ -8,14 +8,16 @@ use ResourceBundle\Request\RequestConfiguration;
 use Towersystems\Resource\Model\ResourceInterface;
 use Towersystems\Resource\Repository\RepositoryInterface;
 
-class SingleResourceProvider implements SingleResourceProviderInterface {
+class SingleResourceProvider implements SingleResourceProviderInterface
+{
 
-	/**
-	 * {@inheritdoc}
-	 */
-	public function get(RequestConfiguration $requestConfiguration, RepositoryInterface $repository):  ? ResourceInterface{
-		$request = $requestConfiguration->getRequest();
+    /**
+     * {@inheritdoc}
+     */
+    public function get(RequestConfiguration $requestConfiguration, RepositoryInterface $repository):  ? ResourceInterface
+    {
+        $request = $requestConfiguration->getRequest();
         $criteria = $requestConfiguration->getCriteria();
-		return $repository->findOneBy($criteria);
-	}
+        return $repository->findOneBy($criteria);
+    }
 }
