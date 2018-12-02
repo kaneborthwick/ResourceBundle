@@ -12,8 +12,6 @@ return [
                     'Gedmo\SoftDeleteable\SoftDeleteableListener',
                     'ORMMappedSuperClassSubscriber',
                     'Gedmo\Sortable\SortableListener',
-                    // 'Gedmo\Loggable\LoggableListener',
-                    // 'Gedmo\Uploadable\UploadableListener',
                 ],
             ],
         ],
@@ -25,8 +23,7 @@ return [
             ],
             'resource_bundle_config' => [
                 'class' => \Doctrine\ORM\Mapping\Driver\AnnotationDriver::class,
-                'cache' => 'array',
-                'paths' => __DIR__ . '/../../../../../gedmo/doctrine-extensions/lib/Gedmo/Loggable/Entity',
+                'cache' => 'array'
             ],
         ],
         'configuration' => [
