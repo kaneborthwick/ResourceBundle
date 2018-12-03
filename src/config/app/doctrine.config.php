@@ -21,10 +21,6 @@ return [
                     Entity::class => 'resource_bundle_config',
                 ],
             ],
-            'resource_bundle_config' => [
-                'class' => \Doctrine\ORM\Mapping\Driver\AnnotationDriver::class,
-                'cache' => 'array'
-            ],
         ],
         'configuration' => [
             'orm_default' => [
