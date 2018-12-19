@@ -167,7 +167,7 @@ class ResourceHandler extends AbstractHandler
         return new TextResponse($jsonContent);
     }
 
-    private function serialize($data)
+    protected function serialize($data)
     {
         $context = new SerializationContext();
         $context->setSerializeNull(true);
