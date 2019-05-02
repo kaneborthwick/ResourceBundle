@@ -34,7 +34,7 @@ class SerializerFactory {
 					return '';
 				})
 			)
-		//->setCacheDir('C:\xampp\htdocs\retailer-out-post-server\data\cache\SerializerCache')
+			->setCacheDir('data\cache\SerializerCache')
 			->build();
 
 		return $a;
