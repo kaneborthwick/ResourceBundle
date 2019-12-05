@@ -93,6 +93,8 @@ abstract class AbstractHandler implements MiddlewareInterface {
 	/** @var [type] [description] */
 	protected $templates;
 
+	protected $options;
+
 	/**
 	 * [__construct description]
 	 * @param [type] $container [description]
@@ -126,6 +128,7 @@ abstract class AbstractHandler implements MiddlewareInterface {
 		$this->serializer = $serializer;
 		$this->statemachine = $statemachine;
 		$this->templates = $templates;
+
 	}
 
 	/**
@@ -138,6 +141,7 @@ abstract class AbstractHandler implements MiddlewareInterface {
 	: \Psr\Http\Message\ResponseInterface{
 
 		$options = $request->getAttribute('Zend\Expressive\Router\RouteResult')->getMatchedRoute()->getOptions();
+		$this->options = $options;
 		$action = isset($options['action']) ? $options['action'] . 'Action' : '';
 
 		if (!method_exists($this, $action)) {
@@ -161,5 +165,16 @@ abstract class AbstractHandler implements MiddlewareInterface {
 			throw new ResourceNotFoundException();
 		}
 		return $resource;
+	}
+
+	/**
+	 * [getOption description]
+	 *
+	 * @param  [type] $option       [description]
+	 * @param  [type] $defaultValue [description]
+	 * @return [type]               [description]
+	 */
+	protected function getOption($option, $defaultValue = null) {
+		return $this->options[$option] ?? $defaultValue;
 	}
 }

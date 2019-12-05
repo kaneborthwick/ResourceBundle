@@ -3,24 +3,54 @@
 namespace ResourceBundle\Resolver;
 
 use ResourceBundle\Request\RequestConfiguration;
+use Towersystems\Grid\Parameters;
 use Towersystems\Resource\Repository\RepositoryInterface;
 
-class ResourcesResolver implements ResourcesResolverInterface
-{
+class ResourcesResolver implements ResourcesResolverInterface {
 
-    /**
-     * {@inheritdoc}
-     */
-    public function getResources(RequestConfiguration $requestConfiguration, RepositoryInterface $repository)
-    {
+	/** @var GridProviderInterface */
+	private $gridProvider;
 
-        $criteria = $requestConfiguration->getCriteria();
-        $orderBy = $requestConfiguration->getOrderBy();
+	/** @var ResourceGridViewFactoryInterface */
+	private $gridViewFactory;
 
-        if ($requestConfiguration->isPaginated()) {
-            return $repository->createPaginator($criteria, $orderBy);
-        }
+	public function __construct(
+		$gridProvider,
+		$gridViewFactory
+	) {
+		$this->gridProvider = $gridProvider;
+		$this->gridViewFactory = $gridViewFactory;
+	}
 
-        return $repository->findBy($criteria, $orderBy, $requestConfiguration->getLimit());
-    }
+	/**
+	 * {@inheritdoc}
+	 */
+	public function getResources(RequestConfiguration $requestConfiguration, RepositoryInterface $repository) {
+
+		if (!$requestConfiguration->hasGrid()) {
+
+			$criteria = $requestConfiguration->getCriteria();
+
+			$orderBy = $requestConfiguration->getOrderBy();
+
+			if ($requestConfiguration->isPaginated()) {
+				return $repository->createPaginator($criteria, $orderBy);
+			}
+
+			return $repository->findBy($criteria, $orderBy, $requestConfiguration->getLimit());
+		}
+
+		$gridDefinition = $this->gridProvider->get($requestConfiguration->getGrid());
+
+		$request = $requestConfiguration->getRequest();
+
+		$gridView = $this->gridViewFactory->create($gridDefinition, new Parameters($request->getQueryParams()), $requestConfiguration->getMetadata(), $requestConfiguration);
+
+		if ($requestConfiguration->isHtmlRequest()) {
+			return $gridView;
+		}
+
+		return $gridView->getData();
+
+	}
 }

@@ -9,169 +9,180 @@ use ResourceBundle\Handler\AbstractHandler;
 use ResourceBundle\Hydrator\DoctrineObjectHydrator;
 use Towersystems\Resource\ResourceActions;
 use Zend\Diactoros\Response\EmptyResponse;
+use Zend\Diactoros\Response\HtmlResponse;
 use Zend\Diactoros\Response\TextResponse;
 
-class ResourceHandler extends AbstractHandler
-{
+class ResourceHandler extends AbstractHandler {
 
-    /**
-     * [indexAction description]
-     * @param  \Psr\Http\Message\ServerRequestInterface $request [description]
-     * @param  \Psr\Http\Server\RequestHandlerInterface $handler [description]
-     * @return [type]                                            [description]
-     */
-    public function indexAction(
-        \Psr\Http\Message\ServerRequestInterface $request,
-        \Psr\Http\Server\RequestHandlerInterface $handler
-    )
-    : \Psr\Http\Message\ResponseInterface { 
-        $configuration = $this->requestConfigurationFactory->create($this->metadata, $request);
-        $resources = $this->resourcesCollectionProvider->get($configuration, $this->repository);
-        $jsonContent = $this->serialize($resources);
+	/**
+	 * [indexAction description]
+	 * @param  \Psr\Http\Message\ServerRequestInterface $request [description]
+	 * @param  \Psr\Http\Server\RequestHandlerInterface $handler [description]
+	 * @return [type]                                            [description]
+	 */
+	public function indexAction(
+		\Psr\Http\Message\ServerRequestInterface $request,
+		\Psr\Http\Server\RequestHandlerInterface $handler
+	)
+	: \Psr\Http\Message\ResponseInterface{
 
-        return new TextResponse($jsonContent);
-    }
+		$configuration = $this->requestConfigurationFactory->create($this->metadata, $request);
+		$configuration->isHtmlRequest();
+		$resources = $this->resourcesCollectionProvider->get($configuration, $this->repository);
 
-    /**
-     * [showAction description]
-     * @param  \Psr\Http\Message\ServerRequestInterface $request [description]
-     * @param  \Psr\Http\Server\RequestHandlerInterface $handler [description]
-     * @return [type]                                            [description]
-     */
-    public function showAction(
-        \Psr\Http\Message\ServerRequestInterface $request,
-        \Psr\Http\Server\RequestHandlerInterface $handler
-    )
-    : \Psr\Http\Message\ResponseInterface { 
+		if ($configuration->isHtmlRequest()) {
+			$template = $this->getOption("template");
+			return new HtmlResponse($this->templates->render($template, [
+				'resources' => $resources,
+				'configuration' => $configuration,
+			]));
 
-        $configuration = $this->requestConfigurationFactory->create($this->metadata, $request);
-        $resource = $this->findOr404($configuration);
+		}
 
-        $jsonContent = $this->serialize($resource);
-        return new TextResponse($jsonContent);
-    }
+		$jsonContent = $this->serialize($resources);
 
-    /**
-     * [updateAction description]
-     * @param  \Psr\Http\Message\ServerRequestInterface $request [description]
-     * @param  \Psr\Http\Server\RequestHandlerInterface $handler [description]
-     * @return [type]                                            [description]
-     */
-    public function updateAction(
-        \Psr\Http\Message\ServerRequestInterface $request,
-        \Psr\Http\Server\RequestHandlerInterface $handler
-    ): \Psr\Http\Message\ResponseInterface {
+		return new TextResponse($jsonContent);
+	}
 
-        $configuration = $this->requestConfigurationFactory->create($this->metadata, $request);
-        $resource = $this->findOr404($configuration);
-        $data = $request->getParsedBody();
+	/**
+	 * [showAction description]
+	 * @param  \Psr\Http\Message\ServerRequestInterface $request [description]
+	 * @param  \Psr\Http\Server\RequestHandlerInterface $handler [description]
+	 * @return [type]                                            [description]
+	 */
+	public function showAction(
+		\Psr\Http\Message\ServerRequestInterface $request,
+		\Psr\Http\Server\RequestHandlerInterface $handler
+	)
+	: \Psr\Http\Message\ResponseInterface{
 
-        $this->eventDispatcher->dispatchPreEvent(ResourceActions::UPDATE, $configuration, $resource, ['data' => $data]);
+		$configuration = $this->requestConfigurationFactory->create($this->metadata, $request);
+		$resource = $this->findOr404($configuration);
 
-        $entityManager = $this->container->get('doctrine.entity_manager.orm_default');
-        $hydrator = new DoctrineObjectHydrator($entityManager);
-        $hydrator->hydrate($data, $resource);
+		$jsonContent = $this->serialize($resource);
+		return new TextResponse($jsonContent);
+	}
 
-        try {
-            $entityManager->persist($resource);
-            $entityManager->flush();
-            // temp hack to save relations
-            $hydrator->hydrate($data, $resource);
-            $entityManager->flush();
+	/**
+	 * [updateAction description]
+	 * @param  \Psr\Http\Message\ServerRequestInterface $request [description]
+	 * @param  \Psr\Http\Server\RequestHandlerInterface $handler [description]
+	 * @return [type]                                            [description]
+	 */
+	public function updateAction(
+		\Psr\Http\Message\ServerRequestInterface $request,
+		\Psr\Http\Server\RequestHandlerInterface $handler
+	): \Psr\Http\Message\ResponseInterface{
 
-            $this->eventDispatcher->dispatchPostEvent(ResourceActions::UPDATE, $configuration, $resource);
-        } catch (\Exception $error) {
-            throw $error;
-        }
+		$configuration = $this->requestConfigurationFactory->create($this->metadata, $request);
+		$resource = $this->findOr404($configuration);
+		$data = $request->getParsedBody();
 
-        $jsonContent = $this->serialize($resource);
-        return new TextResponse($jsonContent);
-    }
+		$this->eventDispatcher->dispatchPreEvent(ResourceActions::UPDATE, $configuration, $resource, ['data' => $data]);
 
-    /**
-     * [deleteAction description]
-     * @param  \Psr\Http\Message\ServerRequestInterface $request [description]
-     * @param  \Psr\Http\Server\RequestHandlerInterface $handler [description]
-     * @return [type]                                            [description]
-     */
-    public function deleteAction(
-        \Psr\Http\Message\ServerRequestInterface $request,
-        \Psr\Http\Server\RequestHandlerInterface $handler
-    ): \Psr\Http\Message\ResponseInterface {
+		$entityManager = $this->container->get('doctrine.entity_manager.orm_default');
+		$hydrator = new DoctrineObjectHydrator($entityManager);
+		$hydrator->hydrate($data, $resource);
 
-        $configuration = $this->requestConfigurationFactory->create($this->metadata, $request);
-        $resource = $this->findOr404($configuration);
-        $this->repository->remove($resource);
+		try {
+			$entityManager->persist($resource);
+			$entityManager->flush();
+			// temp hack to save relations
+			$hydrator->hydrate($data, $resource);
+			$entityManager->flush();
 
-        return new EmptyResponse(200);
-    }
+			$this->eventDispatcher->dispatchPostEvent(ResourceActions::UPDATE, $configuration, $resource);
+		} catch (\Exception $error) {
+			throw $error;
+		}
 
-    public function createAction(
-        \Psr\Http\Message\ServerRequestInterface $request,
-        \Psr\Http\Server\RequestHandlerInterface $handler
-    ): \Psr\Http\Message\ResponseInterface {
+		$jsonContent = $this->serialize($resource);
+		return new TextResponse($jsonContent);
+	}
 
-        $configuration = $this->requestConfigurationFactory->create($this->metadata, $request);
-        $newResource = $this->newResourceFactory->create($configuration, $this->factory);
-        $data = $request->getParsedBody();
+	/**
+	 * [deleteAction description]
+	 * @param  \Psr\Http\Message\ServerRequestInterface $request [description]
+	 * @param  \Psr\Http\Server\RequestHandlerInterface $handler [description]
+	 * @return [type]                                            [description]
+	 */
+	public function deleteAction(
+		\Psr\Http\Message\ServerRequestInterface $request,
+		\Psr\Http\Server\RequestHandlerInterface $handler
+	): \Psr\Http\Message\ResponseInterface{
 
-        $entityManager = $this->container->get('doctrine.entity_manager.orm_default');
-        $this->eventDispatcher->dispatchPreEvent(ResourceActions::CREATE, $configuration, $newResource);
+		$configuration = $this->requestConfigurationFactory->create($this->metadata, $request);
+		$resource = $this->findOr404($configuration);
+		$this->repository->remove($resource);
 
-        $hydrator = new DoctrineObjectHydrator($entityManager);
-        $hydrator->hydrate($data, $newResource);
+		return new EmptyResponse(200);
+	}
 
-        try {
-            $entityManager->persist($newResource);
-            $entityManager->flush();
-            $this->eventDispatcher->dispatchPostEvent(ResourceActions::CREATE, $configuration, $newResource);
-        } catch (\Exception $error) {
-            throw $error;
-        }
+	public function createAction(
+		\Psr\Http\Message\ServerRequestInterface $request,
+		\Psr\Http\Server\RequestHandlerInterface $handler
+	): \Psr\Http\Message\ResponseInterface{
 
-        $jsonContent = $this->serialize($newResource);
+		$configuration = $this->requestConfigurationFactory->create($this->metadata, $request);
+		$newResource = $this->newResourceFactory->create($configuration, $this->factory);
+		$data = $request->getParsedBody();
 
-        return new TextResponse($jsonContent);
-    }
+		$entityManager = $this->container->get('doctrine.entity_manager.orm_default');
+		$this->eventDispatcher->dispatchPreEvent(ResourceActions::CREATE, $configuration, $newResource);
 
-    /**
-     * [applyStateMachineTransitionAction description]
-     *
-     * @param  \Psr\Http\Message\ServerRequestInterface $request [description]
-     * @param  \Psr\Http\Server\RequestHandlerInterface $handler [description]
-     * @return [type]                                            [description]
-     */
-    public function applyStateMachineTransitionAction(
-        \Psr\Http\Message\ServerRequestInterface $request,
-        \Psr\Http\Server\RequestHandlerInterface $handler
-    ): \Psr\Http\Message\ResponseInterface {
+		$hydrator = new DoctrineObjectHydrator($entityManager);
+		$hydrator->hydrate($data, $newResource);
 
-        $configuration = $this->requestConfigurationFactory->create($this->metadata, $request);
-        $resource = $this->findOr404($configuration);
+		try {
+			$entityManager->persist($newResource);
+			$entityManager->flush();
+			$this->eventDispatcher->dispatchPostEvent(ResourceActions::CREATE, $configuration, $newResource);
+		} catch (\Exception $error) {
+			throw $error;
+		}
 
-        $this->eventDispatcher->dispatchPreEvent(ResourceActions::UPDATE, $configuration, $resource);
+		$jsonContent = $this->serialize($newResource);
 
-        if (!$this->statemachine->can($configuration, $resource)) {
-            throw new BadRequestHttpException();
-        }
+		return new TextResponse($jsonContent);
+	}
 
-        if ($configuration->hasStateMachine()) {
-            $this->statemachine->apply($configuration, $resource);
-        }
+	/**
+	 * [applyStateMachineTransitionAction description]
+	 *
+	 * @param  \Psr\Http\Message\ServerRequestInterface $request [description]
+	 * @param  \Psr\Http\Server\RequestHandlerInterface $handler [description]
+	 * @return [type]                                            [description]
+	 */
+	public function applyStateMachineTransitionAction(
+		\Psr\Http\Message\ServerRequestInterface $request,
+		\Psr\Http\Server\RequestHandlerInterface $handler
+	): \Psr\Http\Message\ResponseInterface{
 
-        $entityManager = $this->container->get('doctrine.entity_manager.orm_default');
-        $entityManager->flush();
-        $serializer = \JMS\Serializer\SerializerBuilder::create()->build();
-        $jsonContent = $serializer->serialize($resource, 'json');
+		$configuration = $this->requestConfigurationFactory->create($this->metadata, $request);
+		$resource = $this->findOr404($configuration);
 
-        return new TextResponse($jsonContent);
-    }
+		$this->eventDispatcher->dispatchPreEvent(ResourceActions::UPDATE, $configuration, $resource);
 
-    protected function serialize($data)
-    {
-        $context = new SerializationContext();
-        $context->setSerializeNull(true);
-        $jsonContent = $this->serializer->serialize($data, 'json', $context);
-        return $jsonContent;
-    }
+		if (!$this->statemachine->can($configuration, $resource)) {
+			throw new BadRequestHttpException();
+		}
+
+		if ($configuration->hasStateMachine()) {
+			$this->statemachine->apply($configuration, $resource);
+		}
+
+		$entityManager = $this->container->get('doctrine.entity_manager.orm_default');
+		$entityManager->flush();
+		$serializer = \JMS\Serializer\SerializerBuilder::create()->build();
+		$jsonContent = $serializer->serialize($resource, 'json');
+
+		return new TextResponse($jsonContent);
+	}
+
+	protected function serialize($data) {
+		$context = new SerializationContext();
+		$context->setSerializeNull(true);
+		$jsonContent = $this->serializer->serialize($data, 'json', $context);
+		return $jsonContent;
+	}
 }
