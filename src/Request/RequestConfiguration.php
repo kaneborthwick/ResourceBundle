@@ -167,4 +167,22 @@ class RequestConfiguration {
 		return $this->getRequestOptions()['grid'];
 	}
 
+	/**
+	 * @param string $name
+	 *
+	 * @return string
+	 */
+	public function getRouteName($name) {
+		$section = $this->getSection();
+		$sectionPrefix = $section ? $section . '_' : '';
+
+		return sprintf('%s_%s%s_%s', $this->metadata->getApplicationName(), $sectionPrefix, $this->metadata->getName(), $name);
+	}
+
+	/**
+	 * @return string|null
+	 */
+	public function getSection() {
+		return $this->getRequestOptions()['section'] ?? '';
+	}
 }

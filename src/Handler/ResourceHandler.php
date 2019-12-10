@@ -32,6 +32,7 @@ class ResourceHandler extends AbstractHandler {
 
 		if ($configuration->isHtmlRequest()) {
 			$template = $this->getOption("template");
+
 			return new HtmlResponse($this->templates->render($template, [
 				'resources' => $resources,
 				'configuration' => $configuration,
@@ -59,6 +60,15 @@ class ResourceHandler extends AbstractHandler {
 		$configuration = $this->requestConfigurationFactory->create($this->metadata, $request);
 		$resource = $this->findOr404($configuration);
 
+		if ($configuration->isHtmlRequest()) {
+			$template = $this->getOption("template");
+
+			return new HtmlResponse($this->templates->render($template, [
+				'resource' => $resource,
+				'configuration' => $configuration,
+			]));
+
+		}
 		$jsonContent = $this->serialize($resource);
 		return new TextResponse($jsonContent);
 	}
@@ -76,7 +86,7 @@ class ResourceHandler extends AbstractHandler {
 
 		$configuration = $this->requestConfigurationFactory->create($this->metadata, $request);
 		$resource = $this->findOr404($configuration);
-		$data = $request->getParsedBody();
+		$data = $request->getParsedBody() ?? [];
 
 		$this->eventDispatcher->dispatchPreEvent(ResourceActions::UPDATE, $configuration, $resource, ['data' => $data]);
 
@@ -84,20 +94,29 @@ class ResourceHandler extends AbstractHandler {
 		$hydrator = new DoctrineObjectHydrator($entityManager);
 		$hydrator->hydrate($data, $resource);
 
-		try {
-			$entityManager->persist($resource);
-			$entityManager->flush();
-			// temp hack to save relations
-			$hydrator->hydrate($data, $resource);
-			$entityManager->flush();
+		if (!$configuration->isHtmlRequest()) {
+			try {
+				$entityManager->persist($resource);
+				$entityManager->flush();
+				// temp hack to save relations
+				$hydrator->hydrate($data, $resource);
+				$entityManager->flush();
 
-			$this->eventDispatcher->dispatchPostEvent(ResourceActions::UPDATE, $configuration, $resource);
-		} catch (\Exception $error) {
-			throw $error;
+				$this->eventDispatcher->dispatchPostEvent(ResourceActions::UPDATE, $configuration, $resource);
+			} catch (\Exception $error) {
+				throw $error;
+			}
+
+			$jsonContent = $this->serialize($resource);
+			return new TextResponse($jsonContent);
 		}
 
-		$jsonContent = $this->serialize($resource);
-		return new TextResponse($jsonContent);
+		$template = $this->getOption("template");
+
+		return new HtmlResponse($this->templates->render($template, [
+			'resource' => $resource,
+			'configuration' => $configuration,
+		]));
 	}
 
 	/**
@@ -125,25 +144,35 @@ class ResourceHandler extends AbstractHandler {
 
 		$configuration = $this->requestConfigurationFactory->create($this->metadata, $request);
 		$newResource = $this->newResourceFactory->create($configuration, $this->factory);
+
 		$data = $request->getParsedBody();
 
 		$entityManager = $this->container->get('doctrine.entity_manager.orm_default');
 		$this->eventDispatcher->dispatchPreEvent(ResourceActions::CREATE, $configuration, $newResource);
 
-		$hydrator = new DoctrineObjectHydrator($entityManager);
-		$hydrator->hydrate($data, $newResource);
+		if (!$configuration->isHtmlRequest()) {
+			$hydrator = new DoctrineObjectHydrator($entityManager);
+			$hydrator->hydrate($data, $newResource);
 
-		try {
-			$entityManager->persist($newResource);
-			$entityManager->flush();
-			$this->eventDispatcher->dispatchPostEvent(ResourceActions::CREATE, $configuration, $newResource);
-		} catch (\Exception $error) {
-			throw $error;
+			try {
+				$entityManager->persist($newResource);
+				$entityManager->flush();
+				$this->eventDispatcher->dispatchPostEvent(ResourceActions::CREATE, $configuration, $newResource);
+			} catch (\Exception $error) {
+				throw $error;
+			}
+
+			$jsonContent = $this->serialize($newResource);
+
+			return new TextResponse($jsonContent);
 		}
 
-		$jsonContent = $this->serialize($newResource);
+		$template = $this->getOption("template");
 
-		return new TextResponse($jsonContent);
+		return new HtmlResponse($this->templates->render($template, [
+			'resource' => $newResource,
+			'configuration' => $configuration,
+		]));
 	}
 
 	/**
